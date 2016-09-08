@@ -38,11 +38,13 @@ See example in `.env.example` file
 
 ### Create new cluster
 
+You'll need to ensure you have an [IAM Service Role for this](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-servicerole.html#iam-servicerole-create).
+
 In order to create new cluster you need to execute following bash commands
 
 ```bash
-$ ENV_VARS=$(cat .env | xargs | sed 's/ /,/g')
-$ eb create -c 2pventures-elasticsearch-staging --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 4 elasticsearch-staging
+$ ENV_VARS=$(cat .env | xargs | sed -e 's/ /,/g' -e "s/XXXXXXXX/${AWS_ACCESS_KEY_ID}/g" -e "s/YYYYYYYY/${AWS_SECRET_ACCESS_KEY}/g")
+$ eb create -c 2pventures-elasticsearch-staging --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 4 elasticsearch-staging --service-role aws-elasticbeanstalk-elasticsearch-service-role
 ```
 
 Where `2pventures-elasticsearch-staging` is a CNAME; `elasticsearch-staging` is the environment name; `m3.large` is a instance type and `--scale 4` is how many nodes to create
