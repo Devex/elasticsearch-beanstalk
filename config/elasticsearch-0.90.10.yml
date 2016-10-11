@@ -1,0 +1,22 @@
+cluster.name: ${CLUSTER_NAME}
+
+path:
+  logs: /var/log
+  data: /var/esdata
+
+node.master: true
+node.data: true
+#index.number_of_shards: 10
+#index.number_of_replicas: 2
+http.enabled: true
+discovery.zen.minimum_master_nodes: ${MASTER_NODES}
+cloud:
+  aws:
+    access_key: ${AWS_KEY_ID}
+    secret_key: ${AWS_KEY}
+    region: ${AWS_REGION}
+discovery.ec2.tag.name: ${EC2_TAG_NAME}
+#discovery:
+#	type: ec2
+#	groups: 'elasticsearch'
+#	host_type: 'public_ip'
