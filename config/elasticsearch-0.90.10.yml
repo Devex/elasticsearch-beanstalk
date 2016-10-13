@@ -16,7 +16,7 @@ cloud:
     secret_key: ${AWS_KEY}
     region: ${AWS_REGION}
 discovery.ec2.tag.name: ${EC2_TAG_NAME}
-#discovery:
-#	type: ec2
-#	groups: 'elasticsearch'
-#	host_type: 'public_ip'
+discovery:
+  type: ec2
+  groups: ${CLUSTER_NAME}
+  host_type: 'public_ip'
