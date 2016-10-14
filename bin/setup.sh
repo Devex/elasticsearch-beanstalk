@@ -69,6 +69,10 @@ function deploy() {
        -i ${instance_type} \
        --scale ${nodes} \
        ${cluster_name}
+    instance_ids=$(eb list -v | grep ${cluster_name} | cut -d: -f2 | tr -d "' \[\]" | tr ',' ' ')
+    sg=$(aws ec2 describe-instances --instance-ids ${instance_ids} | egrep "^\|{3}  GroupId" | uniq | cut -d\| -f5 | tr -d ' ')
+    aws ec2 authorize-security-group-ingress --protocol tcp --port 9200-9400 --source-group ${sg} --group-id ${sg}
+    aws ec2 authorize-security-group-ingress --protocol icmp --port -1 --source-group ${sg} --group-id ${sg}
     git checkout master
 }
 
