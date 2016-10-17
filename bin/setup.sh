@@ -4,6 +4,7 @@ function install() {
     if [ $(uname -s) == 'Darwin' ]; then
         if which brew &> /dev/null; then
             brew install awsebcli
+            brew install awscli
         else
             echo "You must install Homebrew in your Mac to use this."
             exit -1
@@ -11,9 +12,11 @@ function install() {
     elif [ $(uname -s) == 'Linux' ]; then
         if which pip &> /dev/null; then
             pip install awsebcli
+            pip install awscli
         else
             easy_install pip
             pip install awsebcli
+            pip install awscli
         fi
     fi
 }
