@@ -23,7 +23,8 @@ function install() {
 
 function setup() {
     if [ -z "${AWS_ACCESS_KEY_ID}" -o -z "${AWS_SECRET_ACCESS_KEY}" ]; then
-        echo "You must export your credentials in AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY."
+        echo -n "You must export your credentials in AWS_ACCESS_KEY_ID and"
+        echo " AWS_SECRET_ACCESS_KEY."
         exit -1
     fi
     if [ ! -f config/elasticsearch-${version}.yml ]; then
@@ -65,17 +66,31 @@ function deploy() {
     fi
     echo ${PROCFILE} > Procfile
     git commit -am "Deploy ${cluster_name}"
+    VPC_PARAMS=""
+    if [ "$network" == "vpc" ]; then
+        echo "Using VPC for ${environment}"
+        vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=${environment}" | grep VpcId | tr -d ' ' | cut -d\| -f4)
+        subnet_ids=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${vpc_id}" "Name=tag:Name,Values=*ublic*" | grep SubnetId | tr -d ' ' | cut -d\| -f4 | tr "\n" ',' | sed -e 's/,$//')
+        sg_id=$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=${vpc_id}" "Name=group-name,Values=elasticsearch-${environment}" | egrep "^\|\|  GroupId" | tr -d ' ' | cut -d\| -f4)
+        VPC_PARAMS="--vpc --vpc.id ${vpc_id} --vpc.ec2subnets ${subnet_ids}"
+        VPC_PARAMS=${VPC_PARAMS}" --vpc.elbsubnets ${subnet_ids} --vpc.elbpublic"
+        VPC_PARAMS=${VPC_PARAMS}" --vpc.publicip"
+        VPC_PARAMS=${VPC_PARAMS}" --vpc.securitygroups ${sg_id}"
+    fi
     eb create \
        -c ${cluster_name} \
        --envvars ${ENV_VARS} \
        --platform=${platform} \
        -i ${instance_type} \
        --scale ${nodes} \
+       ${VPC_PARAMS} \
        ${cluster_name}
-    instance_ids=$(eb list -v | grep ${cluster_name} | cut -d: -f2 | tr -d "' \[\]" | tr ',' ' ')
-    sg=$(aws ec2 describe-instances --instance-ids ${instance_ids} | egrep "^\|{3}  GroupId" | uniq | cut -d\| -f5 | tr -d ' ')
-    aws ec2 authorize-security-group-ingress --protocol tcp --port 9200-9400 --source-group ${sg} --group-id ${sg}
-    aws ec2 authorize-security-group-ingress --protocol icmp --port -1 --source-group ${sg} --group-id ${sg}
+    if [ "$network" == "classic" ]; then
+        instance_ids=$(eb list -v | grep ${cluster_name} | cut -d: -f2 | tr -d "' \[\]" | tr ',' ' ')
+        sg=$(aws ec2 describe-instances --instance-ids ${instance_ids} | egrep "^\|{3}  GroupId" | uniq | cut -d\| -f5 | tr -d ' ')
+        aws ec2 authorize-security-group-ingress --protocol tcp --port 9200-9400 --source-group ${sg} --group-id ${sg}
+        aws ec2 authorize-security-group-ingress --protocol icmp --port -1 --source-group ${sg} --group-id ${sg}
+    fi
     git checkout master
 }
 
