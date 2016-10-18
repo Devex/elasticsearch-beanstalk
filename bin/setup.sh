@@ -44,7 +44,9 @@ function deploy() {
     echo "MASTER_NODES=${nodes}" >> .env
     echo "PORT=9200" >> .env
     ENV_VARS=$(cat .env | xargs | sed 's/ /,/g')
-    sed -i.bak -e "s/ES_VER=2.1.0/ES_VER=${version}/g" .ebextensions/00_setup_elasticsearch.config
+    sed -i.bak \
+        -e "s/ES_VER=2.1.0/ES_VER=${version}/g" \
+        .ebextensions/00_setup_elasticsearch.config
     rm .ebextensions/00_setup_elasticsearch.config.bak
     cp config/elasticsearch-${version}.yml config/elasticsearch.yml
     if [ "${version}" == "0.90.10" ]; then
@@ -62,13 +64,17 @@ function deploy() {
             config/elasticsearch.yml
         rm config/elasticsearch.yml.bak
     else
-        PROCFILE="web:/opt/aws/bin/elasticsearch --path.conf=/var/app/current/config"
+        PROCFILE="web:/opt/aws/bin/elasticsearch"
+        PROCFILE=${PROCFILE}" --path.conf=/var/app/current/config"
     fi
     echo ${PROCFILE} > Procfile
     git commit -am "Deploy ${cluster_name}"
     VPC_PARAMS=""
     if [ "$network" == "vpc" ]; then
-        vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=${environment}" | grep VpcId | tr -d ' ' | cut -d\| -f4)
+        vpc_id=$(
+            aws ec2 describe-vpcs \
+                --filters "Name=tag:Name,Values=${environment}" \
+                | grep VpcId | tr -d ' ' | cut -d\| -f4)
         if [ "${vpc_id}" == "" ]; then
             echo "No VPC found for ${environment}"
             exit -1
