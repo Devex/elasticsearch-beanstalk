@@ -54,15 +54,6 @@ function deploy() {
         PROCFILE=${PROCFILE}" JAVA_OPTS='-Des.path.conf=/var/app/current/config"
         PROCFILE=${PROCFILE}" -Des.path.data=/var/esdata'"
         PROCFILE=${PROCFILE}" /opt/aws/bin/elasticsearch"
-        sed -i.bak \
-            -e "s/\${CLUSTER_NAME}/${cluster_name}/g" \
-            -e "s/\${MASTER_NODES}/${nodes}/g" \
-            -e "s/\${AWS_KEY_ID}/${AWS_ACCESS_KEY_ID}/g" \
-            -e "s/\${AWS_KEY}/${AWS_SECRET_ACCESS_KEY}/g" \
-            -e "s/\${AWS_REGION}/${region}/g" \
-            -e "s/\${EC2_TAG_NAME}/${cluster_name}/g" \
-            config/elasticsearch.yml
-        rm config/elasticsearch.yml.bak
     else
         PROCFILE="web:/opt/aws/bin/elasticsearch"
         PROCFILE=${PROCFILE}" --path.conf=/var/app/current/config"
