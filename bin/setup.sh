@@ -46,8 +46,8 @@ function deploy() {
     ENV_VARS=$(cat .env | xargs | sed 's/ /,/g')
     sed -i.bak \
         -e "s/ES_VER=2.1.0/ES_VER=${version}/g" \
-        .ebextensions/00_setup_elasticsearch.config
-    rm .ebextensions/00_setup_elasticsearch.config.bak
+        .ebextensions/10_setup_app.config
+    rm .ebextensions/10_setup_app.config.bak
     cp config/elasticsearch-${version}.yml config/elasticsearch.yml
     if [ "${version}" == "0.90.10" ]; then
         PROCFILE="web:ES_CLASSPATH=/usr/local/elasticsearch-0.90.10/lib/*"
