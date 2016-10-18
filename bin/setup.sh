@@ -68,8 +68,12 @@ function deploy() {
     git commit -am "Deploy ${cluster_name}"
     VPC_PARAMS=""
     if [ "$network" == "vpc" ]; then
-        echo "Using VPC for ${environment}"
         vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=${environment}" | grep VpcId | tr -d ' ' | cut -d\| -f4)
+        if [ "${vpc_id}" == "" ]; then
+            echo "No VPC found for ${environment}"
+            exit -1
+        fi
+        echo "Using VPC ${vpc_id} for ${environment}"
         subnet_ids=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${vpc_id}" "Name=tag:Name,Values=*ublic*" | grep SubnetId | tr -d ' ' | cut -d\| -f4 | tr "\n" ',' | sed -e 's/,$//')
         sg_id=$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=${vpc_id}" "Name=group-name,Values=elasticsearch-${environment}" | egrep "^\|\|  GroupId" | tr -d ' ' | cut -d\| -f4)
         VPC_PARAMS="--vpc --vpc.id ${vpc_id} --vpc.ec2subnets ${subnet_ids}"
@@ -77,6 +81,7 @@ function deploy() {
         VPC_PARAMS=${VPC_PARAMS}" --vpc.publicip"
         VPC_PARAMS=${VPC_PARAMS}" --vpc.securitygroups ${sg_id}"
     fi
+    echo "Creating cluster ${cluster_name}"
     eb create \
        -c ${cluster_name} \
        --envvars ${ENV_VARS} \
