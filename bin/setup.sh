@@ -59,7 +59,6 @@ function deploy() {
         PROCFILE=${PROCFILE}" --path.conf=/var/app/current/config"
     fi
     echo ${PROCFILE} > Procfile
-    git commit -am "Deploy ${cluster_name}"
     VPC_PARAMS=""
     if [ "$network" == "vpc" ]; then
         vpc_id=$(
@@ -78,6 +77,7 @@ function deploy() {
         VPC_PARAMS=${VPC_PARAMS}" --vpc.publicip"
         VPC_PARAMS=${VPC_PARAMS}" --vpc.securitygroups ${sg_id}"
     fi
+    git commit -am "Deploy ${cluster_name}"
     echo "Creating cluster ${cluster_name}"
     eb create \
        -c ${cluster_name} \
