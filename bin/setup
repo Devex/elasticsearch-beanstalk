@@ -1,0 +1,16 @@
+#!/bin/bash
+
+source bin/lib
+
+if [ -z "${1}" ]; then
+    echo -n "You must specify a default SSH key, "
+    echo "which must exist in your ~/.ssh or in your AWS account."
+    exit -1
+fi
+
+application=es-cluster
+platform=java8
+default_key=${1}
+region=${4-us-east-1}
+
+setup

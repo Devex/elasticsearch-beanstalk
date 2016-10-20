@@ -1,0 +1,26 @@
+#!/bin/bash
+
+source bin/lib
+
+if [ -z "${1}" ]; then
+    echo "You must specify an organization name."
+    exit -1
+fi
+
+if [ -z "${2}" ]; then
+    echo "You must specify an environment."
+    exit -1
+fi
+
+application=es-cluster
+platform=java8
+company=${1}
+environment=${2}
+version=${3-2.1.0}
+network=${4-classic}
+region=${5-us-east-1}
+nodes=${6-2}
+instance_type=${7-m3.large}
+cluster_name=${company}-${environment}-${network}
+
+create
