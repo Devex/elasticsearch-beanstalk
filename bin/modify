@@ -1,0 +1,20 @@
+#!/bin/bash
+
+source bin/lib
+
+if [ -z "${1}" ]; then
+    echo "You must specify a cluster name."
+    exit -1
+fi
+
+if [ -z "${2}" ]; then
+    echo -n "You must specify a list of options and value pairs."
+    echo -n "For example: MaxSize=10 or "
+    echo "MeasureName=CPUUtilization,LowerThreshold=30"
+    exit -1
+fi
+
+cluster_name=${1}
+options=${2}
+
+modify

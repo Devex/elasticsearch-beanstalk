@@ -48,6 +48,71 @@ function setup() {
     fi
 }
 
+function get_namespace() {
+    case "$1" in
+        "UpperBreachScaleIncrement" | \
+        "LowerBreachScaleIncrement" | \
+        "LowerThreshold" | \
+        "MeasureName" | \
+        "UpperThreshold" | \
+        "Unit")
+            echo aws:autoscaling:trigger
+            ;;
+        "MinSize" | \
+        "Cooldown" | \
+        "Availability Zones" | \
+        "MaxSize")
+            echo aws:autoscaling:asg
+            ;;
+        "RollingUpdateType" | \
+        "RollingUpdateEnabled")
+            echo aws:autoscaling:updatepolicy:rollingupdate
+            ;;
+        *)
+            echo "Option/value pair invalid"
+            exit -1
+    esac
+}
+
+function ensure_cluster_name() {
+    if [ $(eb list | egrep -c "^${cluster_name}$") -ne 1 ]; then
+        echo -n "The cluster name provided doesn't match exactly with any "
+        echo "cluster."
+        exit -1
+    fi
+}
+
+function wait_until_env_ready() {
+    echo -n "Waiting for ${cluster_name} to be ready"
+    until $(
+        aws elasticbeanstalk describe-environments \
+            --environment-names ${cluster_name} \
+        | grep -c Ready &> /dev/null
+    ); do
+        sleep 5
+        echo -n "."
+    done
+    echo ""
+}
+
+function modify() {
+    ensure_setup
+    ensure_cluster_name
+    for option in $(echo ${options} | tr ',' ' '); do
+        option_name=$(echo ${option} | cut -d= -f1)
+        value=$(echo ${option} | cut -d= -f2)
+        namespace=$(get_namespace ${option_name})
+        option_item="Namespace=${namespace},"
+        option_item=${option_item}"OptionName=${option_name},"
+        option_item=${option_item}"Value=${value}"
+        echo "Modifying ${option_name} for ${cluster_name}"
+        wait_until_env_ready
+        aws elasticbeanstalk update-environment \
+            --environment-name ${cluster_name} \
+            --option-settings ${option_item}
+    done
+}
+
 function create() {
     ensure_setup
     ensure_version
