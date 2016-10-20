@@ -1,63 +1,55 @@
 # ElasticSearch AWS Cluster
 
-This project is the special configuration for AWS Elastic Beanstalk service. It
-uses empty java-8 service and installs proper ElasticSearch version during
-deployment stage.
+This is a fork of https://github.com/vladmiller/elasticsearch-beanstalk.
+The code added allows you to work with ES cluster creation in AWS Elasticbeanstalk.
 
 ## Prerequisites
 
-Make sure you have installed
+You'll be asked for a ssh key to be used, when creating instances.
+You should have it ready.
+If planning to put your ES cluster in a VPC, you'll need to create an empty security group per environment called `elasticsearch-env_name`.
 
- - AWS Beanstalk [CLI Tools](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3.html)
+## Usage
 
-## Deployment
+### Setup
 
-### Init the EB application
-
-```bash
-$ eb init
-```
-
-**Please remember that our default application name is `elasticsearch-cluster`**
-
-### Configuration
-
-Few environment variables have to be specified before deployment
-
- - `CLUSTER_NAME`: This is a name of your new shiny ElasticSearch cluster, please avoid use of `elasticsearch` name
- - `AWS_KEY_ID`: AWS Key ID
- - `AWS_KEY`: AWS Secret Key
- - `AWS_REGION`: Region in which ES cluster will be created
- - `EC2_TAG_NAME`: This value should be equal to the AWS Name tag (same as environment name)
- - `MASTER_NODES`: Amount of master nodes. The rule is simple, this number should equal to total number of nodes (N) divided by 2 plus 1. `N / 2 + 1`.
- - `PORT`: Should always be set to 9200, unless you changed ES http port
-
-### Usage of `.env.` file
-
-See example in `.env.example` file
+Simple, just run `bin/setup` after clone, from the repository root, specifying a valid ssh key.
 
 ### Create new cluster
 
-In order to create new cluster you need to execute following bash commands
+The command is `bin/create`, you'll need to specify an organization name, and the environment name.
+You also can specify, as ordered arguments:
 
-```bash
-$ ENV_VARS=$(cat .env | xargs | sed 's/ /,/g')
-$ eb create -c 2pventures-elasticsearch-staging --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 4 elasticsearch-staging
-```
+  - ES version to use, by default uses 2.1.0.
+  - Network, i.e. `classic`, which is the default or `vpc`.
+  - Region, defaulting to `us-east-1`.
+  - Will create 2 nodes, unless specified otherwise.
+  - Instance type to use, defaulting to m3.large.
+  
+### Modify parameters in cluster
 
-Where `2pventures-elasticsearch-staging` is a CNAME; `elasticsearch-staging` is the environment name; `m3.large` is a instance type and `--scale 4` is how many nodes to create
+To modify parameters like the maximum number of nodes to have, you'll use `bin/modify`, like the following:
 
-### Configure AWS Security Groups
+    bin/modify cluster-name MaxSize='5'
+    
+If you want to change more options in the same command you can use this:
 
-After environment is created you need to change AWS Security Group rules. You have to allow all 9300-9400 TCP and ICMP traffic within SG group.
+    bin/modify cluster-name UpperThreshold='70',LowerThreshold='30',Unit=Percent,MeasureName=CPUUtilization
+    
+That's the list of options it can modify:
 
-### Deploy changes
-
-```bash
-$ eb deploy elasticsearch-staging
-```
-
-Where `elasticsearch-staging` is a environment name
+  - UpperBreachScaleIncrement
+  - LowerBreachScaleIncrement  
+  - LowerThreshold  
+  - MeasureName  
+  - UpperThreshold  
+  - Unit
+  - MinSize  
+  - Cooldown  
+  - Availability Zones  
+  - MaxSize
+  - RollingUpdateType  
+  - RollingUpdateEnabled
 
 ## Important Notes
 
