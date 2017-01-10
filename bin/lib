@@ -155,7 +155,6 @@ function create() {
         subnet_ids=$(
             aws ec2 describe-subnets \
                 --filters "Name=vpc-id,Values=${vpc_id}" \
-                          "Name=tag:Name,Values=*ublic*" \
                 | grep SubnetId \
                 | tr -d ' ' \
                 | cut -d\| -f4 \
@@ -165,7 +164,7 @@ function create() {
         sg_id=$(
             aws ec2 describe-security-groups \
                 --filters "Name=vpc-id,Values=${vpc_id}" \
-                          "Name=group-name,Values=elasticsearch-${environment}" \
+                "Name=group-name,Values=${environment}-elasticsearch" \
                 | egrep "^\|\|  GroupId" \
                 | tr -d ' ' \
                 | cut -d\| -f4
@@ -176,7 +175,12 @@ function create() {
         VPC_PARAMS=${VPC_PARAMS}" --vpc.securitygroups ${sg_id}"
     fi
     git commit -am "Deploy ${cluster_name}"
-    echo "Creating cluster ${cluster_name}"
+    echo -n "Creating cluster ${cluster_name}"
+    if [ "$network" == "vpc" ]; then
+        echo " with ${VPC_PARAMS}"
+    else
+        echo ""
+    fi
     eb create \
        -c ${cluster_name} \
        --envvars ${ENV_VARS} \
