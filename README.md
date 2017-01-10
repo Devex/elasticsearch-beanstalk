@@ -7,7 +7,7 @@ The code added allows you to work with ES cluster creation in AWS Elasticbeansta
 
 You'll be asked for a ssh key to be used, when creating instances.
 You should have it ready.
-If planning to put your ES cluster in a VPC, you'll need to create an empty security group per environment called `elasticsearch-env_name`.
+If planning to put your ES cluster in a VPC, you'll need to create an empty security group per environment called `${env_name}-elasticsearch`.
 
 ## Usage
 
