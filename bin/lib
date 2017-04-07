@@ -181,7 +181,12 @@ function create() {
         VPC_PARAMS=${VPC_PARAMS}" --vpc.securitygroups ${sg_id}"
     fi
     git commit -am "Deploy ${cluster_name}"
-    echo "Creating cluster ${cluster_name}"
+    echo -n "Creating cluster ${cluster_name}"
+    if [ "$network" == "vpc" ]; then
+        echo " with ${VPC_PARAMS}"
+    else
+        echo ""
+    fi
     eb create \
        -c ${cluster_name} \
        --envvars ${ENV_VARS} \
