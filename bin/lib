@@ -113,6 +113,10 @@ function modify() {
     done
 }
 
+function capitalize() {
+    echo $(echo ${1:0:1} | tr  '[a-z]' '[A-Z]')${1:1}
+}
+
 function create() {
     ensure_setup
     ensure_version
@@ -140,22 +144,23 @@ function create() {
         PROCFILE=${PROCFILE}" --path.conf=/var/app/current/config"
     fi
     echo ${PROCFILE} > Procfile
+    VPC_NAME=$(capitalize ${environment})
     VPC_PARAMS=""
     if [ "$network" == "vpc" ]; then
         vpc_id=$(
             aws ec2 describe-vpcs \
-                --filters "Name=tag:Name,Values=${environment}" \
+                --filters "Name=tag:Name,Values=${VPC_NAME}" \
                 | grep VpcId | tr -d ' ' | cut -d\| -f4
         )
         if [ "${vpc_id}" == "" ]; then
-            echo "No VPC found for ${environment}"
+            echo "No VPC found for ${VPC_NAME}"
             exit -1
         fi
-        echo "Using VPC ${vpc_id} for ${environment}"
+        echo "Using VPC ${vpc_id} for ${VPC_NAME}"
         subnet_ids=$(
             aws ec2 describe-subnets \
                 --filters "Name=vpc-id,Values=${vpc_id}" \
-                          "Name=tag:Name,Values=*ublic*" \
+                          "Name=tag:Name,Values=*Pub*" \
                 | grep SubnetId \
                 | tr -d ' ' \
                 | cut -d\| -f4 \
@@ -165,7 +170,7 @@ function create() {
         sg_id=$(
             aws ec2 describe-security-groups \
                 --filters "Name=vpc-id,Values=${vpc_id}" \
-                          "Name=group-name,Values=elasticsearch-${environment}" \
+                          "Name=group-name,Values=${environment}-elasticsearch" \
                 | egrep "^\|\|  GroupId" \
                 | tr -d ' ' \
                 | cut -d\| -f4
