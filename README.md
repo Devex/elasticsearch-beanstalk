@@ -9,6 +9,8 @@ You'll be asked for a ssh key to be used, when creating instances.
 You should have it ready.
 If planning to put your ES cluster in a VPC, you'll need to create an empty security group per environment called `${env_name}-elasticsearch`.
 
+You will need to have [[https://github.com/poka-yoke/spaceflight/mcc/capcom][capcom]] available in your PATH as well.
+
 ## Usage
 
 ### Setup
