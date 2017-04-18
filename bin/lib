@@ -162,10 +162,8 @@ function create() {
                 --filters "Name=vpc-id,Values=${vpc_id}" \
                           "Name=tag:Name,Values=*Pub*" \
                 | grep SubnetId \
-                | tr -d ' ' \
-                | cut -d\| -f4 \
-                | tr "\n" ',' \
-                | sed -e 's/,$//'
+                | egrep -o 'subnet-[a-z0-9]*' \
+		| paste -s -d, -
         )
         sg_id=$(
             aws ec2 describe-security-groups \
