@@ -232,16 +232,36 @@ function create() {
                 | grep SECURITYGROUPS \
                 | awk '{print $2}'
         )
+        nodes_sg_id=$(
+		        capcom list \
+                | grep "${environment}-elasticsearch" \
+                | awk '{print $2}'
+        )
         monitoring_sg_id=$(
 		        capcom list \
                 | grep "services-monitoring" \
                 | awk '{print $2}'
         )
         capcom add \
-            --proto tcp \
-            --port 80 \
-            --source ${monitoring_sg_id} \
-            ${elb_sg_id}
+               --proto tcp \
+               --port 80 \
+               --source ${monitoring_sg_id} \
+               ${elb_sg_id}
+        capcom add \
+               --proto tcp \
+               --port 80 \
+               --source ${monitoring_sg_id} \
+               ${nodes_sg_id}
+        capcom add \
+               --proto udp \
+               --port 161 \
+               --source ${monitoring_sg_id} \
+               ${nodes_sg_id}
+        capcom add \
+               --proto icmp \
+               --port -1 \
+               --source ${monitoring_sg_id} \
+               ${nodes_sg_id}
     fi
     git checkout master
 }
