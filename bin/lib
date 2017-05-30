@@ -173,7 +173,7 @@ function create() {
         )
         VPC_PARAMS="--vpc --vpc.id ${vpc_id} --vpc.ec2subnets ${subnet_ids}"
         VPC_PARAMS=${VPC_PARAMS}" --vpc.elbsubnets ${subnet_ids}"
-        VPC_PARAMS=${VPC_PARAMS}" --vpc.publicip"
+        #VPC_PARAMS=${VPC_PARAMS}" --vpc.publicip"
         VPC_PARAMS=${VPC_PARAMS}" --vpc.securitygroups ${sg_id}"
     fi
     git commit -am "Deploy ${cluster_name}"
