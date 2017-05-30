@@ -150,7 +150,8 @@ function create() {
         vpc_id=$(
             aws ec2 describe-vpcs \
                 --filters "Name=tag:Name,Values=${VPC_NAME}" \
-                | grep VpcId | cut -d: -f 2 | tr -d '"' | tr -d ','
+                --output text \
+                | grep VPCs | awk '{print $7}'
         )
         if [ "${vpc_id}" == "" ]; then
             echo "No VPC found for ${VPC_NAME}"
@@ -163,10 +164,10 @@ function create() {
                           "Name=tag:Name,Values=*Pub*" \
                 | grep SubnetId \
                 | egrep -o 'subnet-[a-z0-9]*' \
-		| paste -s -d, -
+                | paste -s -d, -
         )
         sg_id=$(
-		capcom list \
+            capcom list \
                 | grep "${environment}-elasticsearch" \
                 | awk '{print $2}'
         )
