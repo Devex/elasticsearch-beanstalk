@@ -21,6 +21,6 @@ network=${4-classic}
 region=${5-us-east-1}
 nodes=${6-2}
 instance_type=${7-m3.large}
-cluster_name=${company}-${environment}-${network}
+cluster_name=${company}-es-${environment}-${network}
 
 create
