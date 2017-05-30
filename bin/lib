@@ -151,7 +151,7 @@ function create() {
             aws ec2 describe-vpcs \
                 --filters "Name=tag:Name,Values=${VPC_NAME}" \
                 --output text \
-                | grep VPCs | awk '{print $7}'
+                | grep VPCS | awk '{print $7}'
         )
         if [ "${vpc_id}" == "" ]; then
             echo "No VPC found for ${VPC_NAME}"
