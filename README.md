@@ -12,6 +12,11 @@ Make sure you have installed
 
 You'll need to ensure you have an [IAM Service Role for this](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-servicerole.html#iam-servicerole-create).
 
+If you plan to deploy the new cluster in a VPC, you will need also the following:
+ - VPC ID
+ - VPC Subnets, might be different for EC2 instances and ELB
+ - VPC Security Groups
+
 ## Deployment
 
 ### Init the EB application
@@ -50,11 +55,18 @@ You can create a copy of this file, like `.env.my-feature, and set the previousl
 
 ### Create new cluster
 
-In order to create new cluster you need to execute following bash commands
+In order to create new cluster, **out of VPC**, you need to execute following bash commands
 
 ```bash
 $ ENV_VARS=$(cat .env.my-feature | xargs | sed -e 's/ /,/g' -e "s/XXXXXXXX/${AWS_ACCESS_KEY_ID}/g" -e "s/YYYYYYYY/${AWS_SECRET_ACCESS_KEY}/g")
 $ eb create -c company-es-test-my-feature --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 es-test-my-feature --service-role aws-elasticbeanstalk-elasticsearch-service-role
+```
+
+To use a **VPC**, you need to execute following bash commands
+
+```bash
+$ ENV_VARS=$(cat .env.my-feature | xargs | sed -e 's/ /,/g' -e "s/XXXXXXXX/${AWS_ACCESS_KEY_ID}/g" -e "s/YYYYYYYY/${AWS_SECRET_ACCESS_KEY}/g")
+$ eb create -c company-es-test-telegraf-vpc --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 es-test-telegraf-vpc --service-role aws-elasticbeanstalk-elasticsearch-service-role --vpc.id ${VPC_ID} --vpc.ec2subnets ${VPC_EC2_SUBNETS} --vpc.elbsubnets ${VPC_EC2_SUBNETS} --vpc.securitygroups ${VPC_SECURITYGROUPS}
 ```
 
 Where `company-es-test-my-feature` is a CNAME; `es-test-my-feature` is the Elastic Beanstalk environment name; `m3.large` is a instance type and `--scale 1` is how many nodes to create
