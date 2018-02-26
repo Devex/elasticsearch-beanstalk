@@ -38,7 +38,7 @@ As default environment, choose Develop one, so in case of mistake nothing great 
 
 Few environment variables, in `.env.example`, have to be specified before deployment:
 
- - `CLUSTER_NAME`: This is a name of your new shiny ElasticSearch cluster, please enforce something like `es-test-my-feature`
+ - `CLUSTER_NAME`: This is a name of your new shiny ElasticSearch cluster, please enforce something like `company-es-test-my-feature`. Must only contain letters, digits, and the dash caracter.
  - `AWS_KEY_ID`: AWS Key ID, skip changing it if your AWS access key ID is exported to `AWS_ACCESS_KEY_ID`.
  - `AWS_KEY`: AWS Secret Key, skip changing it if your AWS secret is exported to `AWS_SECRET_ACCESS_KEY`.
  - `AWS_REGION`: Region in which ES cluster will be created
@@ -59,17 +59,17 @@ In order to create new cluster, **out of VPC**, you need to execute following ba
 
 ```bash
 $ ENV_VARS=$(cat .env.my-feature | xargs | sed -e 's/ /,/g' -e "s/XXXXXXXX/${AWS_ACCESS_KEY_ID}/g" -e "s/YYYYYYYY/${AWS_SECRET_ACCESS_KEY}/g")
-$ eb create -c company-es-test-my-feature --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 es-test-my-feature --service-role aws-elasticbeanstalk-elasticsearch-service-role
+$ eb create -c company-es-test-my-feature --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 company-es-test-my-feature --service-role aws-elasticbeanstalk-elasticsearch-service-role
 ```
 
 To use a **VPC**, you need to execute following bash commands
 
 ```bash
 $ ENV_VARS=$(cat .env.my-feature | xargs | sed -e 's/ /,/g' -e "s/XXXXXXXX/${AWS_ACCESS_KEY_ID}/g" -e "s/YYYYYYYY/${AWS_SECRET_ACCESS_KEY}/g")
-$ eb create -c company-es-test-telegraf-vpc --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 es-test-telegraf-vpc --service-role aws-elasticbeanstalk-elasticsearch-service-role --vpc.id ${VPC_ID} --vpc.ec2subnets ${VPC_EC2_SUBNETS} --vpc.elbsubnets ${VPC_EC2_SUBNETS} --vpc.securitygroups ${VPC_SECURITYGROUPS}
+$ eb create -c company-es-test-my-feature --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 company-es-test-my-feature --service-role aws-elasticbeanstalk-elasticsearch-service-role --vpc.id ${VPC_ID} --vpc.ec2subnets ${VPC_EC2_SUBNETS} --vpc.elbsubnets ${VPC_EC2_SUBNETS} --vpc.securitygroups ${VPC_SECURITYGROUPS} --vpc.publicip
 ```
 
-Where `company-es-test-my-feature` is a CNAME; `es-test-my-feature` is the Elastic Beanstalk environment name; `m3.large` is a instance type and `--scale 1` is how many nodes to create
+Where `company-es-test-my-feature` after `-c` is a CNAME; `company-es-test-my-feature` is the Elastic Beanstalk environment name; these two must contain only letters, digits, and the dash character; `m3.large` is a instance type and `--scale 1` is how many nodes to create.
 
 ### Configure AWS Security Groups
 
@@ -78,10 +78,10 @@ After environment is created you need to change AWS Security Group rules. You ha
 ### Deploy changes
 
 ```bash
-$ eb deploy es-test-my-feature
+$ eb deploy company-es-test-my-feature
 ```
 
-Where `es-test-my-feature` is a environment name
+Where `company-es-test-my-feature` is a environment name
 
 ## Important Notes
 
