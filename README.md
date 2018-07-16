@@ -55,18 +55,12 @@ You can create a copy of this file, like `.env.my-feature, and set the previousl
 
 ### Create new cluster
 
-In order to create new cluster, **out of VPC**, you need to execute following bash commands
+You need to execute following bash commands
 
 ```bash
 $ ENV_VARS=$(cat .env.my-feature | xargs | sed -e 's/ /,/g' -e "s/XXXXXXXX/${AWS_ACCESS_KEY_ID}/g" -e "s/YYYYYYYY/${AWS_SECRET_ACCESS_KEY}/g")
-$ eb create -c company-es-test-my-feature --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 company-es-test-my-feature --service-role aws-elasticbeanstalk-elasticsearch-service-role
-```
-
-To use a **VPC**, you need to execute following bash commands
-
-```bash
-$ ENV_VARS=$(cat .env.my-feature | xargs | sed -e 's/ /,/g' -e "s/XXXXXXXX/${AWS_ACCESS_KEY_ID}/g" -e "s/YYYYYYYY/${AWS_SECRET_ACCESS_KEY}/g")
-$ eb create -c company-es-test-my-feature --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 company-es-test-my-feature --service-role aws-elasticbeanstalk-elasticsearch-service-role --vpc.id ${VPC_ID} --vpc.ec2subnets ${VPC_EC2_SUBNETS} --vpc.elbsubnets ${VPC_EC2_SUBNETS} --vpc.securitygroups ${VPC_SECURITYGROUPS} --vpc.publicip
+$ export $(head -1 .env.my-feature)
+$ eb create -c ${CLUSTER_NAME} --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 ${CLUSTER_NAME} --service-role aws-elasticbeanstalk-elasticsearch-service-role --vpc.id ${VPC_ID} --vpc.ec2subnets ${VPC_EC2_SUBNETS} --vpc.elbsubnets ${VPC_EC2_SUBNETS} --vpc.securitygroups ${VPC_SECURITYGROUPS} --vpc.publicip --tags environment=$(echo ${CLUSTER_NAME} | awk -F- '{print $3}')
 ```
 
 Where `company-es-test-my-feature` after `-c` is a CNAME; `company-es-test-my-feature` is the Elastic Beanstalk environment name; these two must contain only letters, digits, and the dash character; `m3.large` is a instance type and `--scale 1` is how many nodes to create.
@@ -78,10 +72,10 @@ After environment is created you need to change AWS Security Group rules. You ha
 ### Deploy changes
 
 ```bash
-$ eb deploy company-es-test-my-feature
+$ eb deploy ${CLUSTER_NAME}
 ```
 
-Where `company-es-test-my-feature` is a environment name
+Where `${CLUSTER_NAME}` is a environment name
 
 ## Important Notes
 
