@@ -54,6 +54,9 @@ Few environment variables, in `.env.example`, have to be specified before deploy
  - `EC2_TAG_NAME`: This value should be equal to the AWS Name tag (same as environment name)
  - `MASTER_NODES`: Amount of master nodes, should be 1 for most test cases. The rule is simple, this number should equal to total number of nodes (N) divided by 2 plus 1. `N / 2 + 1`.
  - `PORT`: Should always be set to 9200, unless you changed ES http port.
+ 
+In the `.ebextensions/00_setup_elasticsearch.config`, under the options section, the environment variable `ES_JAVA_OPTS` is defined.
+Since version 5.6, it's a requirement to have the maximum and initial heap memory settings to be the same. It's hardcoded to be 6 gigabytes (6g), but feel free to change according to your needs.
 
 ### Usage of `.env` file
 

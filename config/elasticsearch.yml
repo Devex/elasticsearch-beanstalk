@@ -1,13 +1,9 @@
 cluster:
     name: ${CLUSTER_NAME}
 
-plugin.mandatory: cloud-aws
-
 path:
   logs: /var/log
   data: /var/esdata
-
-action.disable_delete_all_indices: true
 
 cloud.aws:
   region: ${AWS_REGION}
@@ -15,7 +11,7 @@ cloud.aws:
 discovery:
   type: ec2
   ec2:
-    ping_timeout: 30s
+    read_timeout: 30s
     tag.Name: ${EC2_TAG_NAME}
     host_type: private_dns
 
@@ -23,7 +19,6 @@ discovery.zen:
   minimum_master_nodes: ${MASTER_NODES}
   ping_timeout: 30s
   ping:
-    multicast.enabled: false
     unicast.hosts: []
 
 script.engine.groovy.inline.update: on
@@ -31,7 +26,7 @@ script.engine.groovy.inline.aggs: on
 script.engine.groovy.inline.search: on
 
 network:
-    host: _non_loopback_
+    host: 0.0.0.0
 
 http:
     host: 0.0.0.0
