@@ -10,8 +10,6 @@ path:
 action.disable_delete_all_indices: true
 
 cloud.aws:
-  access_key: ${AWS_KEY_ID}
-  secret_key: ${AWS_KEY}
   region: ${AWS_REGION}
 
 discovery:
