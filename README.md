@@ -21,6 +21,8 @@ If you plan to deploy the new cluster in a VPC, you will need also the following
 
 ### Init the EB application
 
+**All this section should be done only once**
+
 Ensure you have your credentials loaded as environment variables.
 
 ```bash
@@ -34,17 +36,27 @@ As default environment, choose Develop one, so in case of mistake nothing great 
 
 **Please remember that our default application name is `es-cluster`**
 
-### Configuration
+In order to be able to deploy an ES cluster the nodes will need to query AWS API to get a list of running instances.
+This can be achieved by reusing a service role the `init` command should be creating.
+
+First, this service role needs some adjustments
+* Add `sts:AssumeRole` and `ec2:DescribeInstances` Permissions
+* Add `ec2.amazonaws.com` as a Trusted service
+
+Finally, create a new instance profile called `elasticsearch`, and associate the role to it.
+
+### Configuration for a new cluster
 
 Few environment variables, in `.env.example`, have to be specified before deployment:
 
  - `CLUSTER_NAME`: This is a name of your new shiny ElasticSearch cluster, please enforce something like `company-es-test-my-feature`. Must only contain letters, digits, and the dash caracter.
- - `AWS_KEY_ID`: AWS Key ID, skip changing it if your AWS access key ID is exported to `AWS_ACCESS_KEY_ID`.
- - `AWS_KEY`: AWS Secret Key, skip changing it if your AWS secret is exported to `AWS_SECRET_ACCESS_KEY`.
  - `AWS_REGION`: Region in which ES cluster will be created
  - `EC2_TAG_NAME`: This value should be equal to the AWS Name tag (same as environment name)
  - `MASTER_NODES`: Amount of master nodes, should be 1 for most test cases. The rule is simple, this number should equal to total number of nodes (N) divided by 2 plus 1. `N / 2 + 1`.
  - `PORT`: Should always be set to 9200, unless you changed ES http port.
+ 
+In the `.ebextensions/00_setup_elasticsearch.config`, under the options section, the environment variable `ES_JAVA_OPTS` is defined.
+Since version 5.6, it's a requirement to have the maximum and initial heap memory settings to be the same. It's hardcoded to be 6 gigabytes (6g), but feel free to change according to your needs.
 
 ### Usage of `.env` file
 
@@ -55,15 +67,21 @@ You can create a copy of this file, like `.env.my-feature, and set the previousl
 
 ### Create new cluster
 
-You need to execute following bash commands
+Remember to export your AWS credentials before continuing.
+You need to execute following commands:
 
 ```bash
-$ ENV_VARS=$(cat .env.my-feature | xargs | sed -e 's/ /,/g' -e "s/XXXXXXXX/${AWS_ACCESS_KEY_ID}/g" -e "s/YYYYYYYY/${AWS_SECRET_ACCESS_KEY}/g")
-$ export $(head -1 .env.my-feature)
-$ eb create -c ${CLUSTER_NAME} --envvars ${ENV_VARS} --platform=java-8 -i m3.large --scale 1 ${CLUSTER_NAME} --service-role aws-elasticbeanstalk-elasticsearch-service-role --vpc.id ${VPC_ID} --vpc.ec2subnets ${VPC_EC2_SUBNETS} --vpc.elbsubnets ${VPC_EC2_SUBNETS} --vpc.securitygroups ${VPC_SECURITYGROUPS} --vpc.publicip --tags environment=$(echo ${CLUSTER_NAME} | awk -F- '{print $3}')
+ENV_VARS=$(cat .env.my-feature | tr "\n" "," | sed -e 's/,$//')
+export $(head -1 .env.my-feature)
+VPC_NAME=test
+VPC_ID=$(aws ec2 describe-vpcs --output text --filters Name=tag:Name,Values=${VPC_NAME} | grep VPCS | awk '{print $NF}')
+VPC_EC2_SUBNETS=$(aws ec2 describe-subnets --output text --filters Name=vpc-id,Values=${VPC_ID} | grep SUBNETS | awk '{printf (NR>1?",":"") $(NF-1)}')
+VPC_SECURITYGROUPS=$(aws ec2 describe-security-groups --output text --filters Name=vpc-id,Values=${VPC_ID} | grep SECURITYGROUPS | egrep "management|elasticsearch" |grep -v elb | awk '{printf (NR>1?",":"") $3}')
+
+eb create -c ${CLUSTER_NAME} --envvars ${ENV_VARS} --platform=java-8 -i m4.xlarge --scale 3 ${CLUSTER_NAME} --instance_profile elasticsearch --service-role aws-elasticbeanstalk-elasticsearch-service-role --vpc.id ${VPC_ID} --vpc.ec2subnets ${VPC_EC2_SUBNETS} --vpc.elbsubnets ${VPC_EC2_SUBNETS} --vpc.securitygroups ${VPC_SECURITYGROUPS} --vpc.publicip --tags environment=$(echo ${CLUSTER_NAME} | awk -F- '{print $3}')
 ```
 
-Where `company-es-test-my-feature` after `-c` is a CNAME; `company-es-test-my-feature` is the Elastic Beanstalk environment name; these two must contain only letters, digits, and the dash character; `m3.large` is a instance type and `--scale 1` is how many nodes to create.
+Where `company-es-test-my-feature` after `-c` is a CNAME; `company-es-test-my-feature` is the Elastic Beanstalk environment name; these two must contain only letters, digits, and the dash character; `m4.xlarge` is a instance type and `--scale 1` is how many nodes to create.
 
 ### Configure AWS Security Groups
 
