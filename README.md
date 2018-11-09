@@ -16,6 +16,7 @@ If you plan to deploy the new cluster in a VPC, you will need also the following
  - VPC ID
  - VPC Subnets, might be different for EC2 instances and ELB
  - VPC Security Groups
+ - You will need to have capcom from [Poka-yoke's spaceflight](https://github.com/poka-yoke/spaceflight) installed.
 
 ## Deployment
 
@@ -76,7 +77,7 @@ export $(head -1 .env.my-feature)
 VPC_NAME=test
 VPC_ID=$(aws ec2 describe-vpcs --output text --filters Name=tag:Name,Values=${VPC_NAME} | grep VPCS | awk '{print $NF}')
 VPC_EC2_SUBNETS=$(aws ec2 describe-subnets --output text --filters Name=vpc-id,Values=${VPC_ID} | grep SUBNETS | awk '{printf (NR>1?",":"") $(NF-1)}')
-VPC_SECURITYGROUPS=$(aws ec2 describe-security-groups --output text --filters Name=vpc-id,Values=${VPC_ID} | grep SECURITYGROUPS | egrep "management|elasticsearch" |grep -v elb | awk '{printf (NR>1?",":"") $3}')
+VPC_SECURITYGROUPS=$(capcom list | grep $(echo $VPC_NAME|tr '[:upper:]' '[:lower:]') | egrep "management|elasticsearch" | grep -v elb | awk '{print $2}' | paste -sd "," -)
 
 eb create -c ${CLUSTER_NAME} --envvars ${ENV_VARS} --platform=java-8 -i m4.xlarge --scale 3 ${CLUSTER_NAME} --instance_profile elasticsearch --service-role aws-elasticbeanstalk-elasticsearch-service-role --vpc.id ${VPC_ID} --vpc.ec2subnets ${VPC_EC2_SUBNETS} --vpc.elbsubnets ${VPC_EC2_SUBNETS} --vpc.securitygroups ${VPC_SECURITYGROUPS} --vpc.publicip --tags environment=$(echo ${CLUSTER_NAME} | awk -F- '{print $3}')
 ```
