@@ -56,8 +56,12 @@ Few environment variables, in `.env.example`, have to be specified before deploy
  - `MASTER_NODES`: Amount of master nodes, should be 1 for most test cases. The rule is simple, this number should equal to total number of nodes (N) divided by 2 plus 1. `N / 2 + 1`.
  - `PORT`: Should always be set to 9200, unless you changed ES http port.
  
-In the `.ebextensions/00_setup_elasticsearch.config`, under the options section, the environment variable `ES_JAVA_OPTS` is defined.
+In the `.ebextensions/50_setup_elasticsearch.config`, under the options section, the environment variable `ES_JAVA_OPTS` is defined.
 Since version 5.6, it's a requirement to have the maximum and initial heap memory settings to be the same. It's hardcoded to be 6 gigabytes (6g), but feel free to change according to your needs.
+
+In the `.ebextension/00_setup_volume.config`, a new 300 Gb EBS volume is specified to be provisioned for every instance, so it becomes storage for ES data files, but only if the instance sees it as `/dev/nvme1`.
+
+If the instance type used has local NVMe SSD disk, i.e. m5d, r5d, c5d families, it will be used as the storage for `/var/esdata`, so the file `.ebextensions/00_setup_volume.config` should be removed to avoid provisioning extra unused disks.
 
 ### Usage of `.env` file
 
