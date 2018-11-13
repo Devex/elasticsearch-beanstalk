@@ -72,6 +72,8 @@ In the `.ebextension/00_cloud.config`, a whole set of cloud provisioning definit
 
 This file also provides with the script to mount the NVMe volume. Notice that this will only work on instance types that will see the volumes as NVMe. Also, if the instance belongs to m5d, r5d or c5d, this volume might not be needed.
 
+The file `.ebextensions/60_telegraf.config` defines telegraf setup.
+
 ### Create new cluster
 
 Remember to export your AWS credentials before continuing.
