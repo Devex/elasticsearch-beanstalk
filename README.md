@@ -74,6 +74,8 @@ This file also provides with the script to mount the NVMe volume. Notice that th
 
 The file `.ebextensions/10_nginx.config` modifies Nginx configuration.
 
+The file `.ebextensions/40_jvm.config` sets JVM policies.
+
 The file `.ebextensions/60_telegraf.config` defines telegraf setup.
 
 ### Create new cluster
