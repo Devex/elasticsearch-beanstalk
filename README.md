@@ -69,6 +69,7 @@ In the `.ebextension/00_cloud.config`, a whole set of cloud provisioning definit
  - `ELBScheme`: Must be `internal`, making the cluster not to be accessible from outside the VPC.
  - `AssociatePublicIpAddress`: Must be `true` so the instances are able to reach EB control plane.
  - `ServiceRole`: Service role, which must exist. See Prerequisites.
+ - `MinSize` and `MaxSize`: Define minimum and maximum number of nodes in cluster. Keep the same for stability.
 
 This file also provides with the script to mount the NVMe volume. Notice that this will only work on instance types that will see the volumes as NVMe. Also, if the instance belongs to m5d, r5d or c5d, this volume might not be needed.
 
@@ -86,7 +87,7 @@ You need to execute following commands:
 ```bash
 CLUSTER_NAME=company-es-environment-myfeature
 
-eb create -c ${CLUSTER_NAME} --platform=java-8 --scale 1 ${CLUSTER_NAME} --tags environment=$(echo ${CLUSTER_NAME} | awk -F- '{print $3}')
+eb create -c ${CLUSTER_NAME} --platform=java-8 ${CLUSTER_NAME} --tags environment=$(echo ${CLUSTER_NAME} | awk -F- '{print $3}')
 ```
 
 Where `CLUSTER_NAME` will be the CNAME and the Elastic Beanstalk environment name; these two must contain only letters, digits, and the dash character; `--scale 1` is how many nodes to create.
