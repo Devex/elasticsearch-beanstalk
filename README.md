@@ -47,16 +47,7 @@ Finally, create a new instance profile called `elasticsearch`, and associate the
 
 ### Configuration for a new cluster
 
-Few environment variables, in `.ebextensions/50_elasticsearch.config`, have to be specified before deployment:
-
- - `CLUSTER_NAME`: This is a name of your new shiny ElasticSearch cluster, please enforce something like `company-es-test-my-feature`. Must only contain letters, digits, and the dash caracter.
- - `AWS_REGION`: Region in which ES cluster will be created
- - `EC2_TAG_NAME`: This value should be equal to the AWS Name tag (same as environment name)
- - `MASTER_NODES`: Amount of master nodes, should be 1 for most test cases. The rule is simple, this number should equal to total number of nodes (N) divided by 2 plus 1. `N / 2 + 1`.
- - `PORT`: Should always be set to 9200, unless you changed ES http port.
- - `ES_JAVA_OPTS`: Set to 6g by default, allows to determine JVM heap size initial and maximum values, which, according to ES 5.6 documentation, must be the same size.
-
-This file also describes the process to setup Elasticsearch.
+#### Instance provisioning and scalability
  
 In the `.ebextension/00_cloud.config`, a whole set of cloud provisioning definitions are included:
  - `InstanceType`: Instance type to use for the nodes.
@@ -73,9 +64,28 @@ In the `.ebextension/00_cloud.config`, a whole set of cloud provisioning definit
 
 This file also provides with the script to mount the NVMe volume. Notice that this will only work on instance types that will see the volumes as NVMe. Also, if the instance belongs to m5d, r5d or c5d, this volume might not be needed.
 
+#### Nginx configuration
+
 The file `.ebextensions/10_nginx.config` modifies Nginx configuration.
 
+#### JVM policies
+
 The file `.ebextensions/40_jvm.config` sets JVM policies.
+
+#### Elasticsearch setup and configuration
+
+Few environment variables, in `.ebextensions/50_elasticsearch.config`, have to be specified before deployment:
+
+ - `CLUSTER_NAME`: This is a name of your new shiny ElasticSearch cluster, please enforce something like `company-es-test-my-feature`. Must only contain letters, digits, and the dash caracter.
+ - `AWS_REGION`: Region in which ES cluster will be created
+ - `EC2_TAG_NAME`: This value should be equal to the AWS Name tag (same as environment name)
+ - `MASTER_NODES`: Amount of master nodes, should be 1 for most test cases. The rule is simple, this number should equal to total number of nodes (N) divided by 2 plus 1. `N / 2 + 1`.
+ - `PORT`: Should always be set to 9200, unless you changed ES http port.
+ - `ES_JAVA_OPTS`: Set to 6g by default, allows to determine JVM heap size initial and maximum values, which, according to ES 5.6 documentation, must be the same size.
+
+This file also describes the process to setup Elasticsearch.
+
+#### Telegraf setup
 
 The file `.ebextensions/60_telegraf.config` defines telegraf setup.
 
