@@ -16,7 +16,6 @@ If you plan to deploy the new cluster in a VPC, you will need also the following
  - VPC ID
  - VPC Subnets, might be different for EC2 instances and ELB
  - VPC Security Groups
- - You will need to have capcom from [Poka-yoke's spaceflight](https://github.com/poka-yoke/spaceflight) installed.
 
 ## Deployment
 
@@ -48,27 +47,47 @@ Finally, create a new instance profile called `elasticsearch`, and associate the
 
 ### Configuration for a new cluster
 
-Few environment variables, in `.env.example`, have to be specified before deployment:
+#### Instance provisioning and scalability
+ 
+In the `.ebextension/00_cloud.config`, a whole set of cloud provisioning definitions are included:
+ - `InstanceType`: Instance type to use for the nodes.
+ - `IamInstanceProfile`: IAM instance profile, which must exist. See Prerequisites.
+ - `SecurityGroups`: Comma separated list of Security groups identifiers.
+ - `BlockDeviceMappings`: Extra block devices needed. Example: "/dev/sdf=:300", will add a new 300Gb EBS volume. Review [documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html) for other options.
+ - `VPCId`: VPC identifier.
+ - `Subnets`: Comma separated list of subnets for nodes allocation.
+ - `ELBSubnets`: Comma separated list of subnets for ELB nodes allocation.
+ - `ELBScheme`: Must be `internal`, making the cluster not to be accessible from outside the VPC.
+ - `AssociatePublicIpAddress`: Must be `true` so the instances are able to reach EB control plane.
+ - `ServiceRole`: Service role, which must exist. See Prerequisites.
+ - `MinSize` and `MaxSize`: Define minimum and maximum number of nodes in cluster. Keep the same for stability.
+
+This file also provides with the script to mount the NVMe volume. Notice that this will only work on instance types that will see the volumes as NVMe. Also, if the instance belongs to m5d, r5d or c5d, this volume might not be needed.
+
+#### Nginx configuration
+
+The file `.ebextensions/10_nginx.config` modifies Nginx configuration.
+
+#### JVM policies
+
+The file `.ebextensions/40_jvm.config` sets JVM policies.
+
+#### Elasticsearch setup and configuration
+
+Few environment variables, in `.ebextensions/50_elasticsearch.config`, have to be specified before deployment:
 
  - `CLUSTER_NAME`: This is a name of your new shiny ElasticSearch cluster, please enforce something like `company-es-test-my-feature`. Must only contain letters, digits, and the dash caracter.
  - `AWS_REGION`: Region in which ES cluster will be created
  - `EC2_TAG_NAME`: This value should be equal to the AWS Name tag (same as environment name)
  - `MASTER_NODES`: Amount of master nodes, should be 1 for most test cases. The rule is simple, this number should equal to total number of nodes (N) divided by 2 plus 1. `N / 2 + 1`.
  - `PORT`: Should always be set to 9200, unless you changed ES http port.
- 
-In the `.ebextensions/50_setup_elasticsearch.config`, under the options section, the environment variable `ES_JAVA_OPTS` is defined.
-Since version 5.6, it's a requirement to have the maximum and initial heap memory settings to be the same. It's hardcoded to be 6 gigabytes (6g), but feel free to change according to your needs.
+ - `ES_JAVA_OPTS`: Set to 6g by default, allows to determine JVM heap size initial and maximum values, which, according to ES 5.6 documentation, must be the same size.
 
-In the `.ebextension/00_setup_volume.config`, a new 300 Gb EBS volume is specified to be provisioned for every instance, so it becomes storage for ES data files, but only if the instance sees it as `/dev/nvme1`.
+This file also describes the process to setup Elasticsearch.
 
-If the instance type used has local NVMe SSD disk, i.e. m5d, r5d, c5d families, it will be used as the storage for `/var/esdata`, so the file `.ebextensions/00_setup_volume.config` should be removed to avoid provisioning extra unused disks.
+#### Telegraf setup
 
-### Usage of `.env` file
-
-See example in `.env.example` file.
-You can create a copy of this file, like `.env.my-feature, and set the previously explained variables there.
-
-**Notice this file will not be committed anywhere**
+The file `.ebextensions/60_telegraf.config` defines telegraf setup.
 
 ### Create new cluster
 
@@ -76,17 +95,12 @@ Remember to export your AWS credentials before continuing.
 You need to execute following commands:
 
 ```bash
-ENV_VARS=$(cat .env.my-feature | tr "\n" "," | sed -e 's/,$//')
-export $(head -1 .env.my-feature)
-VPC_NAME=test
-VPC_ID=$(aws ec2 describe-vpcs --output text --filters Name=tag:Name,Values=${VPC_NAME} | grep VPCS | awk '{print $NF}')
-VPC_EC2_SUBNETS=$(aws ec2 describe-subnets --output text --filters Name=vpc-id,Values=${VPC_ID} | grep SUBNETS | awk '{printf (NR>1?",":"") $(NF-1)}')
-VPC_SECURITYGROUPS=$(capcom list | grep $(echo $VPC_NAME|tr '[:upper:]' '[:lower:]') | egrep "management|elasticsearch" | grep -v elb | awk '{print $2}' | paste -sd "," -)
+CLUSTER_NAME=company-es-environment-myfeature
 
-eb create -c ${CLUSTER_NAME} --envvars ${ENV_VARS} --platform=java-8 -i m4.xlarge --scale 3 ${CLUSTER_NAME} --instance_profile elasticsearch --service-role aws-elasticbeanstalk-elasticsearch-service-role --vpc.id ${VPC_ID} --vpc.ec2subnets ${VPC_EC2_SUBNETS} --vpc.elbsubnets ${VPC_EC2_SUBNETS} --vpc.securitygroups ${VPC_SECURITYGROUPS} --vpc.publicip --tags environment=$(echo ${CLUSTER_NAME} | awk -F- '{print $3}')
+eb create -c ${CLUSTER_NAME} --platform=java-8 ${CLUSTER_NAME} --tags environment=$(echo ${CLUSTER_NAME} | awk -F- '{print $3}')
 ```
 
-Where `company-es-test-my-feature` after `-c` is a CNAME; `company-es-test-my-feature` is the Elastic Beanstalk environment name; these two must contain only letters, digits, and the dash character; `m4.xlarge` is a instance type and `--scale 1` is how many nodes to create.
+Where `CLUSTER_NAME` will be the CNAME and the Elastic Beanstalk environment name; these two must contain only letters, digits, and the dash character; `--scale 1` is how many nodes to create.
 
 ### Configure AWS Security Groups
 
