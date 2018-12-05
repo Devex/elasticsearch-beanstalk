@@ -14,6 +14,7 @@ discovery:
     read_timeout: 30s
     tag.Name: ${EC2_TAG_NAME}
     host_type: private_dns
+    endpoint: ec2.us-east-1.amazonaws.com
 
 discovery.zen:
   minimum_master_nodes: ${MASTER_NODES}
@@ -26,7 +27,7 @@ script.engine.groovy.inline.aggs: on
 script.engine.groovy.inline.search: on
 
 network:
-    host: 0.0.0.0
+    host: _ec2_
 
 http:
     host: 0.0.0.0
