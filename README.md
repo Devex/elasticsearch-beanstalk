@@ -21,7 +21,7 @@ If you plan to deploy the new cluster in a VPC, you will need also the following
 
 ### Init the EB application
 
-**All this section should be done only once**
+**All this section should be done only once. It is not intended to be done for each cluster.**
 
 Ensure you have your credentials loaded as environment variables.
 
@@ -47,12 +47,18 @@ Finally, create a new instance profile called `elasticsearch`, and associate the
 
 ### Configuration for a new cluster
 
-#### Instance provisioning and scalability
+#### Create a new branch for the new cluster
+You must create a new branch for the new cluster, named after the cluster, which should be something like `company-es-environment-feature`.
+
+#### Review and adjust configuration files
+Once you finished setting the desired parameters in the following files, you should commit these into the branch you created for this cluster.
+
+##### Instance provisioning and scalability
  
 In the `.ebextension/00_cloud.config`, a whole set of cloud provisioning definitions are included:
  - `InstanceType`: Instance type to use for the nodes.
  - `IamInstanceProfile`: IAM instance profile, which must exist. See Prerequisites.
- - `SecurityGroups`: Comma separated list of Security groups identifiers.
+ - `SecurityGroups`: Comma separated list of Security groups identifiers to be applied to the instances, besides the ones created by EBT.
  - `BlockDeviceMappings`: Extra block devices needed. Example: "/dev/sdf=:300", will add a new 300Gb EBS volume. Review [documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html) for other options.
  - `VPCId`: VPC identifier.
  - `Subnets`: Comma separated list of subnets for nodes allocation.
@@ -64,15 +70,15 @@ In the `.ebextension/00_cloud.config`, a whole set of cloud provisioning definit
 
 This file also provides with the script to mount the NVMe volume. Notice that this will only work on instance types that will see the volumes as NVMe. Also, if the instance belongs to m5d, r5d or c5d, this volume might not be needed.
 
-#### Nginx configuration
+##### Nginx configuration
 
-The file `.ebextensions/10_nginx.config` modifies Nginx configuration.
+The file `.ebextensions/nginx/nginx.conf` contains general Nginx configuration file.
 
-#### JVM policies
+##### JVM policies
 
 The file `.ebextensions/40_jvm.config` sets JVM policies.
 
-#### Elasticsearch setup and configuration
+##### Elasticsearch setup and configuration
 
 Few environment variables, in `.ebextensions/50_elasticsearch.config`, have to be specified before deployment:
 
@@ -85,7 +91,7 @@ Few environment variables, in `.ebextensions/50_elasticsearch.config`, have to b
 
 This file also describes the process to setup Elasticsearch.
 
-#### Telegraf setup
+##### Telegraf setup
 
 The file `.ebextensions/60_telegraf.config` defines telegraf setup.
 
